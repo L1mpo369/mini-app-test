@@ -5,23 +5,45 @@
   <title>Idle Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Telegram SDK -->
+  <!-- Telegram Mini App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 40px;
+      padding: 24px;
       text-align: center;
+      background: #f5f5f5;
+    }
+    h2 {
+      margin-bottom: 10px;
     }
     #coins {
-      font-size: 36px;
+      font-size: 40px;
       margin: 20px 0;
+    }
+    #income {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 20px;
     }
     button {
       font-size: 20px;
-      padding: 15px 30px;
+      padding: 14px 30px;
       cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #2ea6ff;
+      color: white;
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    #user {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #777;
+      word-break: break-word;
     }
   </style>
 </head>
@@ -29,43 +51,71 @@
 
   <h2>Idle Game</h2>
 
-  <div>Coins:</div>
   <div id="coins">0</div>
+  <div id="income">+0 / sec</div>
 
-  <button id="click">💰 Click</button>
+  <button id="click">💰 Заработать</button>
+
+  <div id="user"></div>
 
   <script>
+    // --- Telegram ---
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // 👇 ID пользователя Telegram
-    const USER_ID = tg.initDataUnsafe.user.id;
+    // --- User data from Telegram ---
+    const user = tg.initDataUnsafe.user;
 
-    // 👇 URL из ngrok (ВАЖНО: https)
-    const API_URL = "https://stan-multilaminate-glady.ngrok-free.dev"; // ← ЗАМЕНИ
+    const USER_ID = user.id;
 
+    // 🔁 ВАЖНО: сюда вставь свой ngrok URL
+    const API_URL = "https://stan-multilaminate-glady.ngrok-free.dev";
+
+    // --- UI elements ---
+    const coinsEl = document.getElementById("coins");
+    const incomeEl = document.getElementById("income");
+    const userEl = document.getElementById("user");
+
+    // --- Показываем информацию о пользователе (разрешённую Telegram) ---
+    userEl.innerText =
+      "User info:\n" +
+      "id: " + user.id + "\n" +
+      "username: " + (user.username || "-") + "\n" +
+      "name: " + user.first_name + " " + (user.last_name || "") + "\n" +
+      "language: " + user.language_code + "\n" +
+      "premium: " + (user.is_premium ? "yes" : "no");
+
+    // --- Загрузка состояния (с учётом офлайна) ---
     async function loadState() {
       const res = await fetch(API_URL + "/state", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: USER_ID })
       });
+
       const data = await res.json();
-      document.getElementById("coins").innerText = data.coins;
+
+      coinsEl.innerText = data.coins;
+      incomeEl.innerText = "+" + data.income_per_second + " / sec";
     }
 
+    // --- Клик ---
     async function click() {
       const res = await fetch(API_URL + "/click", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: USER_ID })
       });
+
       const data = await res.json();
-      document.getElementById("coins").innerText = data.coins;
+
+      coinsEl.innerText = data.coins;
+      incomeEl.innerText = "+" + data.income_per_second + " / sec";
     }
 
     document.getElementById("click").addEventListener("click", click);
 
+    // --- initial load ---
     loadState();
   </script>
 
