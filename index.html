@@ -2,25 +2,71 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Mini App Test</title>
+  <title>Idle Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- Telegram SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    #coins {
+      font-size: 36px;
+      margin: 20px 0;
+    }
+    button {
+      font-size: 20px;
+      padding: 15px 30px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
 
-  <h2>Mini App работает 🎉</h2>
-  <button onclick="test()">Нажми меня</button>
+  <h2>Idle Game</h2>
+
+  <div>Coins:</div>
+  <div id="coins">0</div>
+
+  <button id="click">💰 Click</button>
 
   <script>
     const tg = window.Telegram.WebApp;
-
     tg.ready();
 
-    function test() {
-      alert("Открыто внутри Telegram ✅");
+    // 👇 ID пользователя Telegram
+    const USER_ID = tg.initDataUnsafe.user.id;
+
+    // 👇 URL из ngrok (ВАЖНО: https)
+    const API_URL = "https://stan-multilaminate-glady.ngrok-free.dev"; // ← ЗАМЕНИ
+
+    async function loadState() {
+      const res = await fetch(API_URL + "/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: USER_ID })
+      });
+      const data = await res.json();
+      document.getElementById("coins").innerText = data.coins;
     }
+
+    async function click() {
+      const res = await fetch(API_URL + "/click", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: USER_ID })
+      });
+      const data = await res.json();
+      document.getElementById("coins").innerText = data.coins;
+    }
+
+    document.getElementById("click").addEventListener("click", click);
+
+    loadState();
   </script>
 
 </body>
