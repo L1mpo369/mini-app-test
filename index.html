@@ -5,7 +5,6 @@
   <title>Idle Game</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Telegram Mini App SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
@@ -28,23 +27,22 @@
       margin-bottom: 20px;
     }
     button {
-      font-size: 20px;
-      padding: 14px 30px;
+      font-size: 18px;
+      padding: 14px 26px;
       cursor: pointer;
       border: none;
       border-radius: 8px;
       background: #2ea6ff;
       color: white;
+      margin: 6px;
     }
     button:active {
       transform: scale(0.98);
     }
-    #user {
-      margin-top: 30px;
-      font-size: 12px;
-      color: #777;
-      word-break: break-word;
-      white-space: pre-line;
+    #upgrade-info {
+      font-size: 14px;
+      margin-top: 6px;
+      color: #333;
     }
   </style>
 </head>
@@ -57,7 +55,10 @@
 
   <button id="click">💰 Заработать</button>
 
-  <div id="user"></div>
+  <div style="margin-top: 20px;">
+    <button id="upgrade">⬆ Upgrade (+0.5/sec за 10)</button>
+    <div id="upgrade-info">Апгрейдов: 0</div>
+  </div>
 
   <script>
     /* ---------- Telegram ---------- */
@@ -67,30 +68,21 @@
     const user = tg.initDataUnsafe.user;
     const USER_ID = user.id;
 
-    /* ---------- Backend URL ---------- */
-    // ⚠️ ВСТАВЬ СВОЙ ngrok / облачный URL
+    /* ---------- Backend ---------- */
     const API_URL = "https://stan-multilaminate-glady.ngrok-free.dev";
 
     /* ---------- UI ---------- */
     const coinsEl = document.getElementById("coins");
     const incomeEl = document.getElementById("income");
-    const userEl = document.getElementById("user");
+    const upgradeInfoEl = document.getElementById("upgrade-info");
 
-    /* ---------- Game state (client-side view) ---------- */
+    /* ---------- Game state ---------- */
     let coins = 0;
     let incomePerSecond = 0;
+    let upgradeLevel = 0;
     let lastTick = Date.now();
 
-    /* ---------- User info (разрешённые данные) ---------- */
-    userEl.innerText =
-      "User info:\n" +
-      "id: " + user.id + "\n" +
-      "username: " + (user.username || "-") + "\n" +
-      "name: " + user.first_name + " " + (user.last_name || "") + "\n" +
-      "language: " + user.language_code + "\n" +
-      "premium: " + (user.is_premium ? "yes" : "no");
-
-    /* ---------- Load state (server = источник истины) ---------- */
+    /* ---------- Load state ---------- */
     async function loadState() {
       const res = await fetch(API_URL + "/state", {
         method: "POST",
@@ -102,9 +94,11 @@
 
       coins = data.coins;
       incomePerSecond = data.income_per_second;
+      upgradeLevel = data.upgrade_level;
 
       coinsEl.innerText = Math.floor(coins);
       incomeEl.innerText = "+" + incomePerSecond + " / sec";
+      upgradeInfoEl.innerText = "Апгрейдов: " + upgradeLevel;
 
       lastTick = Date.now();
     }
@@ -121,22 +115,51 @@
 
       coins = data.coins;
       incomePerSecond = data.income_per_second;
+      upgradeLevel = data.upgrade_level;
 
       coinsEl.innerText = Math.floor(coins);
       incomeEl.innerText = "+" + incomePerSecond + " / sec";
+      upgradeInfoEl.innerText = "Апгрейдов: " + upgradeLevel;
 
       lastTick = Date.now();
     }
 
-    document.getElementById("click").addEventListener("click", click);
+    /* ---------- Upgrade ---------- */
+    async function upgrade() {
+      const res = await fetch(API_URL + "/upgrade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: USER_ID })
+      });
 
-    /* ---------- LIVE IDLE TICK (визуальный рост) ---------- */
+      if (!res.ok) {
+        alert("Не хватает валюты");
+        return;
+      }
+
+      const data = await res.json();
+
+      coins = data.coins;
+      incomePerSecond = data.income_per_second;
+      upgradeLevel = data.upgrade_level;
+
+      coinsEl.innerText = Math.floor(coins);
+      incomeEl.innerText = "+" + incomePerSecond + " / sec";
+      upgradeInfoEl.innerText = "Апгрейдов: " + upgradeLevel;
+
+      lastTick = Date.now();
+    }
+
+    document.getElementById("click").onclick = click;
+    document.getElementById("upgrade").onclick = upgrade;
+
+    /* ---------- Live idle tick ---------- */
     setInterval(() => {
       const now = Date.now();
-      const deltaSeconds = (now - lastTick) / 1000;
+      const delta = (now - lastTick) / 1000;
       lastTick = now;
 
-      coins += incomePerSecond * deltaSeconds;
+      coins += incomePerSecond * delta;
       coinsEl.innerText = Math.floor(coins);
     }, 1000);
 
