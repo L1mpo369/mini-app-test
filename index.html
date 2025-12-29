@@ -14,6 +14,9 @@
       text-align: center;
       background: #f5f5f5;
     }
+    h2 {
+      margin-bottom: 10px;
+    }
     #coins {
       font-size: 42px;
       margin: 20px 0;
@@ -32,10 +35,14 @@
       color: white;
       margin: 6px;
       cursor: pointer;
-      transition: transform 0.05s ease;
+      transition: transform 0.05s ease, opacity 0.1s ease;
     }
     button:active {
       transform: scale(0.95);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
     #offline {
       color: #2e7d32;
@@ -59,35 +66,47 @@
 
   <button id="click">💰 Заработать</button>
 
-  <div>
+  <div style="margin-top: 16px;">
     <button id="upgrade">⬆ Upgrade</button>
     <div id="upgrade-info">Апгрейдов: 0</div>
   </div>
 
   <script>
+    /* ---------- Telegram ---------- */
     const tg = window.Telegram.WebApp;
     tg.ready();
 
     const USER_ID = tg.initDataUnsafe.user.id;
+
+    /* ---------- Backend ---------- */
     const API_URL = "https://stan-multilaminate-glady.ngrok-free.dev";
 
+    /* ---------- UI ---------- */
     const coinsEl = document.getElementById("coins");
     const incomeEl = document.getElementById("income");
     const offlineEl = document.getElementById("offline");
     const upgradeInfoEl = document.getElementById("upgrade-info");
     const upgradeBtn = document.getElementById("upgrade");
 
+    /* ---------- Game state ---------- */
     let coins = 0;
     let incomePerSecond = 0;
     let upgradeLevel = 0;
     let lastTick = Date.now();
     let lastServerCoins = 0;
 
-    function updateUpgradeText() {
-      const price = 10 * (upgradeLevel + 1);
-      upgradeBtn.innerText = `⬆ Upgrade (+0.5/sec за ${price})`;
+    /* ---------- Helpers ---------- */
+    function upgradePrice() {
+      return 10 * (upgradeLevel + 1);
     }
 
+    function updateUpgradeText() {
+      const price = upgradePrice();
+      upgradeBtn.innerText = `⬆ Upgrade (+0.5/sec за ${price})`;
+      upgradeBtn.disabled = coins < price;
+    }
+
+    /* ---------- Load state ---------- */
     async function loadState() {
       const res = await fetch(API_URL + "/state", {
         method: "POST",
@@ -97,6 +116,7 @@
 
       const data = await res.json();
 
+      // офлайн доход
       if (lastServerCoins > 0 && data.coins > lastServerCoins) {
         offlineEl.innerText =
           `🕒 Пока тебя не было, ты заработал +${data.coins - lastServerCoins}`;
@@ -117,6 +137,7 @@
       lastTick = Date.now();
     }
 
+    /* ---------- Click ---------- */
     async function click() {
       const res = await fetch(API_URL + "/click", {
         method: "POST",
@@ -138,6 +159,7 @@
       lastTick = Date.now();
     }
 
+    /* ---------- Upgrade ---------- */
     async function upgrade() {
       const res = await fetch(API_URL + "/upgrade", {
         method: "POST",
@@ -167,14 +189,19 @@
     document.getElementById("click").onclick = click;
     upgradeBtn.onclick = upgrade;
 
+    /* ---------- Live idle tick ---------- */
     setInterval(() => {
       const now = Date.now();
       const delta = (now - lastTick) / 1000;
       lastTick = now;
+
       coins += incomePerSecond * delta;
       coinsEl.innerText = Math.floor(coins);
+
+      updateUpgradeText();
     }, 1000);
 
+    /* ---------- Init ---------- */
     loadState();
   </script>
 
