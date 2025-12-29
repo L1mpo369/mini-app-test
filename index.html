@@ -1,27 +1,10 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <title>Mini App Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<button onclick="send()">Отправить данные боту</button>
 
-  <!-- Telegram SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body>
+<script>
+  const tg = window.Telegram.WebApp;
+  tg.ready();
 
-  <h2>Mini App работает 🎉</h2>
-  <button onclick="test()">Нажми меня</button>
-
-  <script>
-    const tg = window.Telegram.WebApp;
-
-    tg.ready();
-
-    function test() {
-      alert("Открыто внутри Telegram ✅");
-    }
-  </script>
-
-</body>
-</html>
+  function send() {
+    tg.sendData("Привет от Mini App 👋");
+  }
+</script>
