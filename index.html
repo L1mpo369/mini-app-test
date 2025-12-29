@@ -19,7 +19,7 @@
       margin-bottom: 10px;
     }
     #coins {
-      font-size: 40px;
+      font-size: 42px;
       margin: 20px 0;
     }
     #income {
@@ -44,6 +44,7 @@
       font-size: 12px;
       color: #777;
       word-break: break-word;
+      white-space: pre-line;
     }
   </style>
 </head>
@@ -59,24 +60,28 @@
   <div id="user"></div>
 
   <script>
-    // --- Telegram ---
+    /* ---------- Telegram ---------- */
     const tg = window.Telegram.WebApp;
     tg.ready();
 
-    // --- User data from Telegram ---
     const user = tg.initDataUnsafe.user;
-
     const USER_ID = user.id;
 
-    // 🔁 ВАЖНО: сюда вставь свой ngrok URL
+    /* ---------- Backend URL ---------- */
+    // ⚠️ ВСТАВЬ СВОЙ ngrok / облачный URL
     const API_URL = "https://stan-multilaminate-glady.ngrok-free.dev";
 
-    // --- UI elements ---
+    /* ---------- UI ---------- */
     const coinsEl = document.getElementById("coins");
     const incomeEl = document.getElementById("income");
     const userEl = document.getElementById("user");
 
-    // --- Показываем информацию о пользователе (разрешённую Telegram) ---
+    /* ---------- Game state (client-side view) ---------- */
+    let coins = 0;
+    let incomePerSecond = 0;
+    let lastTick = Date.now();
+
+    /* ---------- User info (разрешённые данные) ---------- */
     userEl.innerText =
       "User info:\n" +
       "id: " + user.id + "\n" +
@@ -85,7 +90,7 @@
       "language: " + user.language_code + "\n" +
       "premium: " + (user.is_premium ? "yes" : "no");
 
-    // --- Загрузка состояния (с учётом офлайна) ---
+    /* ---------- Load state (server = источник истины) ---------- */
     async function loadState() {
       const res = await fetch(API_URL + "/state", {
         method: "POST",
@@ -95,11 +100,16 @@
 
       const data = await res.json();
 
-      coinsEl.innerText = data.coins;
-      incomeEl.innerText = "+" + data.income_per_second + " / sec";
+      coins = data.coins;
+      incomePerSecond = data.income_per_second;
+
+      coinsEl.innerText = Math.floor(coins);
+      incomeEl.innerText = "+" + incomePerSecond + " / sec";
+
+      lastTick = Date.now();
     }
 
-    // --- Клик ---
+    /* ---------- Click ---------- */
     async function click() {
       const res = await fetch(API_URL + "/click", {
         method: "POST",
@@ -109,13 +119,28 @@
 
       const data = await res.json();
 
-      coinsEl.innerText = data.coins;
-      incomeEl.innerText = "+" + data.income_per_second + " / sec";
+      coins = data.coins;
+      incomePerSecond = data.income_per_second;
+
+      coinsEl.innerText = Math.floor(coins);
+      incomeEl.innerText = "+" + incomePerSecond + " / sec";
+
+      lastTick = Date.now();
     }
 
     document.getElementById("click").addEventListener("click", click);
 
-    // --- initial load ---
+    /* ---------- LIVE IDLE TICK (визуальный рост) ---------- */
+    setInterval(() => {
+      const now = Date.now();
+      const deltaSeconds = (now - lastTick) / 1000;
+      lastTick = now;
+
+      coins += incomePerSecond * deltaSeconds;
+      coinsEl.innerText = Math.floor(coins);
+    }, 1000);
+
+    /* ---------- Init ---------- */
     loadState();
   </script>
 
