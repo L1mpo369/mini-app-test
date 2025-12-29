@@ -1,7 +1,40 @@
-<script>
-  alert(
-    window.Telegram?.WebApp
-      ? "Это Mini App ✅"
-      : "Это браузер ❌"
-  );
-</script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini App Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Официальный SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 14px 20px;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Telegram Mini App</h2>
+
+  <button onclick="send()">Отправить данные боту</button>
+
+  <script>
+    const tg = Telegram.WebApp;
+
+    // сообщаем Telegram, что Mini App готов
+    tg.ready();
+
+    function send() {
+      tg.sendData("HELLO_FROM_MINI_APP");
+    }
+  </script>
+
+</body>
+</html>
