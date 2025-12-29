@@ -1,3 +1,7 @@
 <script>
-  alert(window.Telegram ? "Это Telegram" : "Это браузер");
+  alert(
+    window.Telegram?.WebApp
+      ? "Это Mini App ✅"
+      : "Это браузер ❌"
+  );
 </script>
