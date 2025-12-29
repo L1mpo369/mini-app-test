@@ -1,24 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <title>Test</title>
+  <meta charset="UTF-8">
+  <title>Mini App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ОБЯЗАТЕЛЬНО -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    button {
+      padding: 14px 20px;
+      font-size: 16px;
+    }
+  </style>
 </head>
 <body>
 
-<button id="btn">SEND</button>
+  <h2>Mini App работает</h2>
 
-<script>
-  document.getElementById("btn").onclick = () => {
-    try {
-      Telegram.WebApp.sendData("PING");
-      document.body.innerHTML = "<h2>SENT</h2>";
-    } catch (e) {
-      document.body.innerHTML = "<h2>ERROR</h2><pre>" + e + "</pre>";
-    }
-  };
-</script>
+  <button id="send">Отправить данные</button>
+
+  <script>
+    // ВСЕГДА так
+    const tg = window.Telegram.WebApp;
+
+    // сообщаем Telegram, что приложение готово
+    tg.ready();
+
+    document.getElementById("send").addEventListener("click", () => {
+      // отправляем строку (можно JSON)
+      tg.sendData("PING_FROM_MINI_APP");
+
+      // визуальный фидбек (важно для отладки)
+      document.body.innerHTML = "<h2>Данные отправлены</h2>";
+    });
+  </script>
 
 </body>
 </html>
